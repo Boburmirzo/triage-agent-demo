@@ -1,0 +1,123 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "__PROVIDER_ID__/__MODEL_ID__",
+  "small_model": "__PROVIDER_ID__/__SMALL_MODEL_ID__",
+  "default_agent": "__DEFAULT_AGENT__",
+  "share": "disabled",
+  "autoupdate": false,
+  "snapshot": false,
+  "enabled_providers": ["__PROVIDER_ID__"],
+  "permission": {
+    "edit": "deny",
+    "webfetch": "deny",
+    "external_directory": "deny",
+    "skill": {
+      "azure-observability-demo": "allow",
+      "*": "deny"
+    }
+  },
+  "agent": {
+    "triage-agent": {
+      "mode": "primary",
+      "model": "__PROVIDER_ID__/__MODEL_ID__",
+      "temperature": 0,
+      "maxSteps": 24,
+      "tools": {
+        "bash": true,
+        "edit": false,
+        "write": false,
+        "webfetch": false,
+        "skill": true
+      },
+      "permission": {
+        "read": "allow",
+        "edit": "deny",
+        "webfetch": "deny",
+        "external_directory": "deny",
+        "bash": {
+          "*": "deny",
+          "date*": "allow",
+          "python3 /workspace/tools/demo-observability.py*": "allow",
+          "az account show*": "allow",
+          "az account list*": "allow",
+          "az group list*": "allow",
+          "az provider list*": "allow",
+          "az provider show*": "allow",
+          "az resource list*": "allow",
+          "az resource show*": "allow",
+          "az graph query*": "allow",
+          "az monitor activity-log list*": "allow",
+          "az monitor app-insights query*": "allow",
+          "az monitor log-analytics query*": "allow",
+          "az monitor log-analytics workspace list*": "allow",
+          "az monitor metrics list*": "allow",
+          "az containerapp list*": "allow",
+          "az containerapp show*": "allow",
+          "az containerapp revision list*": "allow",
+          "az containerapp env list*": "allow",
+          "az containerapp logs show*": "allow",
+          "az functionapp list*": "allow",
+          "az functionapp show*": "allow",
+          "az functionapp function list*": "allow",
+          "az storage account list*": "allow",
+          "az storage account show*": "allow",
+          "az storage container list*": "allow",
+          "az storage container show*": "allow",
+          "az storage blob list*": "allow",
+          "az storage blob show*": "allow",
+          "az storage queue list*": "allow",
+          "az storage message peek*": "allow",
+          "az sql server list*": "allow",
+          "az sql server show*": "allow",
+          "az sql db list*": "allow",
+          "az sql db show*": "allow",
+          "az rest --method get*": "allow",
+          "az rest -m get*": "allow"
+        },
+        "skill": {
+          "azure-observability-demo": "allow",
+          "*": "deny"
+        }
+      }
+    }
+  },
+  "provider": {
+    "__PROVIDER_ID__": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "__PROVIDER_NAME__",
+      "options": {
+        "baseURL": "__OPENAI_BASE_URL__",
+        "apiKey": "__API_KEY__"
+      },
+      "models": {
+        "__MODEL_ID__": {
+          "name": "__MODEL_DISPLAY_NAME__",
+          "tool_call": true,
+          "capabilities": {
+            "temperature": false,
+            "reasoning": true,
+            "toolcall": true,
+            "input": {
+              "text": true,
+              "image": false,
+              "audio": false,
+              "video": false,
+              "pdf": false
+            },
+            "output": {
+              "text": true,
+              "image": false,
+              "audio": false,
+              "video": false,
+              "pdf": false
+            }
+          },
+          "limit": {
+            "context": "__MODEL_CONTEXT_LIMIT__",
+            "output": "__MODEL_OUTPUT_LIMIT__"
+          }
+        }
+      }
+    }
+  }
+}

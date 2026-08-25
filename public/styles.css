@@ -1,0 +1,77 @@
+:root {
+  --bg: #09111f;
+  --panel: #101b2f;
+  --card: #ffffff;
+  --ink: #eaf1ff;
+  --muted: #96a3b8;
+  --line: rgb(255 255 255 / 10%);
+  --blue: #68a8ff;
+  --green: #61d394;
+  --amber: #ffd166;
+  --red: #ff6b6b;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(circle at top left, #1a3970, var(--bg) 42%); color: var(--ink); }
+button, textarea { font: inherit; }
+button { cursor: pointer; }
+.sidebar { position: fixed; inset: 0 auto 0 0; display: flex; width: 310px; flex-direction: column; border-right: 1px solid var(--line); background: rgb(16 27 47 / 86%); backdrop-filter: blur(18px); padding: 18px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.brand .mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 14px; background: linear-gradient(135deg, var(--blue), #8f6bff); color: white; font-weight: 900; }
+.brand strong, .brand span { display: block; }
+.brand span, .muted, .note { color: var(--muted); font-size: 12px; }
+.primary, .send { border: 0; border-radius: 14px; background: var(--blue); color: #06101f; font-weight: 800; }
+.primary { padding: 12px 14px; }
+.send { padding: 0 20px; }
+.send:disabled { opacity: 0.55; cursor: wait; }
+.session-list { flex: 1; overflow-y: auto; margin: 18px -6px; padding: 0 6px; }
+.session { display: block; width: 100%; border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--ink); margin-bottom: 8px; padding: 12px; text-align: left; }
+.session:hover, .session.active { border-color: var(--line); background: rgb(255 255 255 / 8%); }
+.session strong, .session span { display: block; }
+.session strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session span { color: var(--muted); font-size: 12px; margin-top: 5px; text-transform: capitalize; }
+.note { border-top: 1px solid var(--line); padding-top: 14px; line-height: 1.5; }
+.main { margin-left: 310px; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 18px 28px; background: rgb(9 17 31 / 52%); backdrop-filter: blur(18px); }
+.topbar span, .topbar strong { display: block; }
+.topbar span { color: var(--muted); font-size: 12px; }
+.topbar strong { margin-top: 4px; }
+.pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; color: var(--amber); font-size: 12px; font-weight: 800; text-transform: capitalize; }
+.pill.complete { color: var(--green); }
+.pill.failed { color: var(--red); }
+.chat { flex: 1; overflow-y: auto; padding: 34px 28px; }
+.empty { max-width: 780px; margin: 8vh auto; text-align: center; }
+.empty .kicker { color: var(--blue); font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+.empty h1 { margin: 10px 0; font-size: clamp(34px, 6vw, 68px); line-height: 0.95; letter-spacing: -0.06em; }
+.empty p { color: var(--muted); font-size: 18px; line-height: 1.6; }
+.messages { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+.message { display: flex; }
+.message.user { justify-content: flex-end; }
+.bubble { max-width: min(820px, 86%); border: 1px solid var(--line); border-radius: 22px; background: rgb(255 255 255 / 8%); padding: 16px 18px; line-height: 1.55; box-shadow: 0 30px 90px rgb(0 0 0 / 20%); }
+.message.user .bubble { background: var(--blue); color: #06101f; border-color: transparent; }
+.markdown { color: #0c1830; background: var(--card); }
+.markdown h3 { margin: 18px 0 6px; font-size: 16px; color: #0c1830; }
+.markdown h3:first-child { margin-top: 0; }
+.markdown p { margin: 0 0 10px; }
+.markdown table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+.markdown th, .markdown td { border: 1px solid #d9e2f1; padding: 8px 10px; text-align: left; vertical-align: top; }
+.markdown th { background: #eef5ff; }
+.markdown ol { margin: 8px 0 12px; padding-left: 22px; }
+.tools { margin-top: 14px; display: grid; gap: 8px; }
+.tool { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 14px; background: rgb(255 255 255 / 6%); padding: 10px; }
+.tool span { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 50%; background: var(--amber); color: #06101f; font-weight: 900; }
+.tool.complete span { background: var(--green); }
+.tool strong, .tool small { display: block; }
+.tool small { color: var(--muted); margin-top: 2px; }
+.composer { display: flex; gap: 12px; border-top: 1px solid var(--line); background: rgb(9 17 31 / 70%); padding: 18px 28px; }
+.composer textarea { flex: 1; resize: vertical; border: 1px solid var(--line); border-radius: 18px; outline: 0; background: rgb(255 255 255 / 9%); color: var(--ink); min-height: 58px; padding: 14px 16px; }
+
+@media (max-width: 840px) {
+  .sidebar { position: static; width: auto; min-height: auto; }
+  .main { margin-left: 0; }
+  .topbar, .chat, .composer { padding-left: 16px; padding-right: 16px; }
+  .composer { flex-direction: column; }
+  .send { padding: 14px; }
+  .bubble { max-width: 100%; }
+}

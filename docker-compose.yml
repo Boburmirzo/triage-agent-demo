@@ -1,0 +1,9 @@
+services:
+  opencode-triage-agent-demo:
+    build: .
+    ports:
+      - "4096:4096"
+    env_file:
+      - .env
+    environment:
+      OPENCODE_DEFAULT_AGENT: triage-agent
