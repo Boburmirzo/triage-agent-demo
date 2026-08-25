@@ -23,7 +23,7 @@ This skill helps the demo `triage-agent` explain the triage workflow and choose 
 Run:
 
 ```bash
-python3 /workspace/tools/demo-observability.py --incident "Centralis staging report failed with timeout around 10:00 UTC"
+python3 /workspace/tools/demo-observability.py --incident "ExampleCo staging report failed with timeout around 10:00 UTC"
 ```
 
 The tool returns JSON with these sections:

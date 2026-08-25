@@ -15,7 +15,7 @@ const subscribers = new Map();
 const seededEvidence = [
   {
     source: 'Azure account',
-    detail: 'Connected to demo subscription datox-observability-demo using managed identity scope.',
+    detail: 'Connected to demo subscription demo-observability-subscription using managed identity scope.',
   },
   {
     source: 'Application Insights',
@@ -31,7 +31,7 @@ const seededEvidence = [
   },
   {
     source: 'Container Apps',
-    detail: 'compliance-functions-staging had two restarts after memory pressure and was processing queued report jobs slowly.',
+    detail: 'sample-functions-staging had two restarts after memory pressure and was processing queued report jobs slowly.',
   },
   {
     source: 'Queue Storage',
@@ -104,7 +104,7 @@ function addMessage(session, role, content) {
 function inferIncident(input = {}) {
   const description = String(input.description || input.content || '').trim();
   const environment = input.environment || (description.toLowerCase().includes('prod') ? 'production' : 'staging');
-  const customer = input.customer || (description.toLowerCase().includes('centralis') ? 'Centralis' : 'Demo Customer');
+  const customer = input.customer || (description.toLowerCase().includes('exampleco') ? 'ExampleCo' : 'Demo Customer');
   return {
     customer,
     environment,
@@ -128,14 +128,14 @@ async function simulateInvestigation(sessionId, content) {
 
   const steps = [
     ['tool.started', 'Verifying Azure context', 'az account show'],
-    ['tool.completed', 'Azure context verified', 'Subscription datox-observability-demo'],
+    ['tool.completed', 'Azure context verified', 'Subscription demo-observability-subscription'],
     ['tool.started', 'Querying Application Insights', 'requests | where timestamp between (...)'],
     ['tool.completed', 'Application Insights query complete', seededEvidence[1].detail],
     ['tool.started', 'Checking exceptions', 'exceptions | where operation_Id == demo-op-7f3a'],
     ['tool.completed', 'Exception evidence found', seededEvidence[2].detail],
     ['tool.started', 'Checking dependency latency', 'dependencies | summarize p95(duration)'],
     ['tool.completed', 'Dependency latency elevated', seededEvidence[3].detail],
-    ['tool.started', 'Checking Container App health', 'az containerapp show --name compliance-functions-staging'],
+    ['tool.started', 'Checking Container App health', 'az containerapp show --name sample-functions-staging'],
     ['tool.completed', 'Container App pressure detected', seededEvidence[4].detail],
     ['tool.started', 'Checking queue depth', 'az storage message peek --queue-name report-generation'],
     ['tool.completed', 'Queue backlog confirmed', seededEvidence[5].detail],

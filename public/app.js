@@ -6,12 +6,12 @@ const state = {
   sending: false,
   eventStatus: '',
   draft: {
-    customer: 'Centralis',
+    customer: 'ExampleCo',
     environment: 'staging',
     workflow: 'Report generation',
-    description: 'Centralis staging report failed with timeout around 10:00 UTC. Please investigate.',
+    description: 'ExampleCo staging report failed with timeout around 10:00 UTC. Please investigate.',
   },
-  input: 'Centralis staging report failed with timeout around 10:00 UTC. Please investigate.',
+  input: 'ExampleCo staging report failed with timeout around 10:00 UTC. Please investigate.',
 };
 
 const app = document.getElementById('app');

@@ -68,7 +68,7 @@ Create an OpenCode session:
 ```bash
 curl -u "opencode:demo-password" \
   -H "content-type: application/json" \
-  -d '{"title":"Centralis staging timeout demo"}' \
+  -d '{"title":"ExampleCo staging timeout demo"}' \
   "http://localhost:4096/session"
 ```
 
@@ -82,7 +82,7 @@ curl -u "opencode:demo-password" \
     "parts":[
       {
         "type":"text",
-        "text":"Centralis staging report failed with timeout around 10:00 UTC. Please investigate using the demo observability tool and return the structured RCA."
+        "text":"ExampleCo staging report failed with timeout around 10:00 UTC. Please investigate using the demo observability tool and return the structured RCA."
       }
     ]
   }' \
@@ -92,7 +92,7 @@ curl -u "opencode:demo-password" \
 The agent is expected to run:
 
 ```bash
-python3 /workspace/tools/demo-observability.py --incident "Centralis staging report failed with timeout around 10:00 UTC"
+python3 /workspace/tools/demo-observability.py --incident "ExampleCo staging report failed with timeout around 10:00 UTC"
 ```
 
 and then produce a structured RCA.
@@ -206,7 +206,7 @@ The allowlist intentionally does not include restarts, scale changes, deployment
 Try this prompt:
 
 ```text
-Centralis staging report failed with timeout around 10:00 UTC. Please investigate.
+ExampleCo staging report failed with timeout around 10:00 UTC. Please investigate.
 ```
 
 ## Production Comparison

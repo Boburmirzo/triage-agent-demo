@@ -5,10 +5,10 @@ from datetime import datetime, timezone
 
 
 def build_payload(incident: str) -> dict:
-    text = incident or "Centralis staging report failed with timeout around 10:00 UTC"
+    text = incident or "ExampleCo staging report failed with timeout around 10:00 UTC"
     lowered = text.lower()
     environment = "production" if "prod" in lowered else "staging"
-    customer = "Centralis" if "centralis" in lowered else "Demo Customer"
+    customer = "ExampleCo" if "exampleco" in lowered else "Demo Customer"
 
     return {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -50,13 +50,13 @@ def build_payload(incident: str) -> dict:
         "evidence": [
             {
                 "source": "Application Insights requests",
-                "resource": "compliance-backend-api-staging",
+                "resource": "sample-backend-api-staging",
                 "finding": "12 failed report-generation requests in the incident window.",
                 "correlation_id": "demo-op-7f3a",
             },
             {
                 "source": "Application Insights exceptions",
-                "resource": "compliance-backend-api-staging",
+                "resource": "sample-backend-api-staging",
                 "finding": "TimeoutError raised by ReportRenderService after dependency calls exceeded 30 seconds.",
                 "correlation_id": "demo-op-7f3a",
             },
@@ -68,7 +68,7 @@ def build_payload(incident: str) -> dict:
             },
             {
                 "source": "Container Apps",
-                "resource": "compliance-functions-staging",
+                "resource": "sample-functions-staging",
                 "finding": "Worker app restarted twice and had memory pressure during queue processing.",
                 "correlation_id": "demo-worker-revision-42",
             },
@@ -80,7 +80,7 @@ def build_payload(incident: str) -> dict:
             },
             {
                 "source": "Deployment metadata",
-                "resource": "compliance-functions-staging revisions",
+                "resource": "sample-functions-staging revisions",
                 "finding": "No new revision was activated between 09:30 and 10:15 UTC.",
                 "correlation_id": "demo-worker-revision-42",
             },
