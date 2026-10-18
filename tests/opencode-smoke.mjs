@@ -13,7 +13,11 @@ let providerCalls = 0;
 let toolCalled = false;
 let skillCalled = false;
 const gateway = http.createServer(async (req, res) => {
+  assert.equal(req.url, '/openai/v1/responses');
+  assert.equal(req.headers['api-key'], 'smoke-test');
   const body = await readJson(req, 4 * 1024 * 1024);
+  assert.equal(body.temperature, undefined);
+  assert.equal(body.top_p, undefined);
   providerCalls++;
   const callSkill = body.tools?.some((t) => t.name === 'skill') && !skillCalled;
   const callTool = !callSkill && body.tools?.some((t) => t.name === 'bash') && !toolCalled;
@@ -57,8 +61,8 @@ await once(gateway, 'listening');
 const name = `triage-protocol-smoke-${process.pid}`;
 try {
   await docker('docker', ['run', '-d', '--rm', '--name', name, '--add-host', 'host.docker.internal:host-gateway', '-p', '127.0.0.1::4096',
-    '-e', 'TRIAGE_MODE=opencode', '-e', 'OPENCODE_SERVER_PASSWORD=smoke-test', '-e', 'OPENAI_API_KEY=smoke-test',
-    '-e', `LITELLM_BASE_URL=http://host.docker.internal:${gateway.address().port}/v1`, 'triage-agent-demo-runtime']);
+    '-e', 'TRIAGE_MODE=opencode', '-e', 'OPENCODE_SERVER_PASSWORD=smoke-test', '-e', 'AZURE_OPENAI_API_KEY=smoke-test',
+    '-e', `AZURE_OPENAI_ENDPOINT=http://host.docker.internal:${gateway.address().port}`, process.env.TRIAGE_RUNTIME_IMAGE || 'triage-agent-demo-runtime']);
   const { stdout } = await docker('docker', ['port', name, '4096']);
   const base = `http://${stdout.trim()}`;
   let healthy = false;
@@ -80,7 +84,7 @@ try {
   assert(events.some((e) => e.event === 'tool.updated' && e.data.label === 'skill' && e.data.status === 'completed'), 'real OpenCode must load the imported observability skill');
   assert.equal(events.at(-1).event, 'run.completed');
   assert(toolCalled);
-  console.log('PASS: real OpenCode → GPT-6 Sol Responses API → imported skill → seeded tool → streamed answer');
+  console.log('PASS: real OpenCode → direct Foundry v1 API → imported skill → seeded tool → streamed answer');
 } finally {
   await docker('docker', ['stop', name]).catch(() => {});
   gateway.closeAllConnections();

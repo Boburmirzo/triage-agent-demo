@@ -18,13 +18,12 @@ ENV HOME=/home/opencode \
     OPENCODE_HOSTNAME=0.0.0.0 \
     OPENCODE_PORT=4097 \
     OPENCODE_SERVER_USERNAME=opencode \
-    OPENCODE_PROVIDER_ID=litellm \
-    OPENCODE_PROVIDER_NAME=LiteLLM \
+    OPENCODE_PROVIDER_ID=foundry \
+    OPENCODE_PROVIDER_NAME="Microsoft Foundry" \
     OPENCODE_MODEL=gpt-6-sol \
     OPENCODE_MODEL_DISPLAY_NAME="GPT-6 Sol" \
     OPENCODE_DEFAULT_AGENT=triage-agent \
-    AZURE_LOGIN_WITH_MANAGED_IDENTITY=false \
-    LITELLM_BASE_URL=http://host.docker.internal:4000/v1
+    AZURE_LOGIN_WITH_MANAGED_IDENTITY=false
 
 WORKDIR /workspace
 
@@ -33,6 +32,7 @@ COPY ./agents /workspace/agents
 COPY ./skills /workspace/skills
 COPY ./tools /workspace/tools
 COPY ./config /workspace/config
+COPY ./plugins /workspace/plugins
 COPY ./AGENTS.md /workspace/AGENTS.md
 COPY ./*.mjs /workspace/
 COPY ./lib /workspace/lib

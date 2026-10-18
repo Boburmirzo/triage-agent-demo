@@ -153,7 +153,7 @@ test('OpenCode adapter subscribes before prompting, scopes events, normalizes to
   assert.equal(events.at(-1).event, 'run.completed');
   assert.equal(events.find((e) => e.event === 'message.final').data.content, 'Database latency confirmed.');
   assert(!JSON.stringify(events).includes('sensitive-raw-output'));
-  assert.equal(promptBody.model.providerID, 'litellm');
+  assert.equal(promptBody.model.providerID, 'foundry');
   assert.equal(promptBody.model.modelID, 'gpt-6-sol');
   assert.equal(promptBody.parts[0].text, input.content);
   assert.match(promptBody.system, /capabilities, not an instruction to start an investigation/);
@@ -209,21 +209,22 @@ test('live chat does not require Azure discovery or mark a tool-free reply as an
   assert.match(prompt.system, /Available live scope: resource group test-group/);
 });
 
-test('LiteLLM config registers small models and gates live Azure without embedding placeholders', async () => {
+test('Foundry config registers deployment aliases and gates live Azure without embedding placeholders', async () => {
   const template = JSON.parse(await fs.readFile(new URL('../services/runtime/config/opencode.template.json', import.meta.url), 'utf8'));
-  const config = renderConfig(template, { OPENCODE_MODEL: 'large', OPENCODE_SMALL_MODEL: 'small', LITELLM_BASE_URL: 'http://gateway/v1', LITELLM_API_KEY: 'test-only', OPENCODE_MODEL_INPUT_LIMIT: '100000' });
-  assert.equal(config.provider.litellm.options.baseURL, 'http://gateway/v1');
-  assert.equal(config.provider.litellm.options.apiKey, 'test-only');
-  assert.equal(config.provider.litellm.npm, '@ai-sdk/openai');
-  assert(config.provider.litellm.models.small);
-  assert.equal(config.provider.litellm.models.large.limit.input, 100000);
+  const config = renderConfig(template, { AZURE_OPENAI_DEPLOYMENT: 'large', AZURE_OPENAI_SMALL_DEPLOYMENT: 'small', AZURE_OPENAI_ENDPOINT: 'https://example.openai.azure.com', AZURE_OPENAI_API_KEY: 'test-only', OPENCODE_MODEL_INPUT_LIMIT: '100000' });
+  assert.equal(config.provider.foundry.options.baseURL, 'https://example.openai.azure.com/openai/v1');
+  assert.equal(config.provider.foundry.options.apiKey, 'test-only');
+  assert.equal(config.provider.foundry.options.headers['api-key'], 'test-only');
+  assert.equal(config.provider.foundry.npm, '@ai-sdk/openai');
+  assert(config.provider.foundry.models.small);
+  assert.equal(config.provider.foundry.models.large.limit.input, 100000);
   assert.equal(config.agent['triage-agent'].permission.bash['az *'], 'deny');
   assert(!JSON.stringify(config).includes('__MODEL'));
   assert.throws(() => renderConfig(template, { OPENCODE_MODEL_OUTPUT_LIMIT: '-1' }));
   const defaults = renderConfig(template, {});
-  assert.equal(defaults.model, 'litellm/gpt-6-sol');
-  assert.equal(defaults.small_model, 'litellm/gpt-6-sol');
-  assert.deepEqual(defaults.provider.litellm.models['gpt-6-sol'].limit, { context: 1050000, input: 922000, output: 16000 });
+  assert.equal(defaults.model, 'foundry/gpt-6-sol');
+  assert.equal(defaults.small_model, 'foundry/gpt-6-sol');
+  assert.deepEqual(defaults.provider.foundry.models['gpt-6-sol'].limit, { context: 1050000, input: 922000, output: 16000 });
   assert.equal(defaults.compaction.reserved, 50000);
   const live = renderConfig(template, { TRIAGE_LIVE_AZURE_ENABLED: 'true', AZURE_RESOURCE_GROUP: 'example-observability' });
   const permissions = live.agent['triage-agent'].permission;

@@ -21,7 +21,7 @@ TEMPLATE="${OPENCODE_TEMPLATE:-/workspace/config/opencode.template.json}"
 
 mkdir -p "$CONFIG_DIR"
 
-if [ "${TRIAGE_LIVE_AZURE_ENABLED:-false}" = "true" ] && [ "${AZURE_LOGIN_WITH_MANAGED_IDENTITY:-false}" = "true" ]; then
+if [ "${AZURE_LOGIN_WITH_MANAGED_IDENTITY:-false}" = "true" ]; then
   if [ -n "${AZURE_CLIENT_ID:-}" ]; then
     az login --identity --client-id "$AZURE_CLIENT_ID" --allow-no-subscriptions >/dev/null
   else

@@ -1,5 +1,6 @@
 import { readSse } from './lib/http.mjs';
 import { conversationInstructions } from './conversation.mjs';
+import { modelProvider } from './model-provider.mjs';
 
 export function openCodeClient(env = process.env) {
   const base = env.OPENCODE_SERVER_URL || `http://127.0.0.1:${env.OPENCODE_PORT || 4097}`;
@@ -16,6 +17,7 @@ export function openCodeClient(env = process.env) {
 
 export async function investigateOpenCode(input, emit, signal, env = process.env) {
   const request = openCodeClient(env);
+  const provider = modelProvider(env);
   // Keep OpenCode's conversation in its own persistent volume, paired with the API session.
   let sessionId = input.runtimeSessionId;
   if (!sessionId) {
@@ -85,7 +87,7 @@ export async function investigateOpenCode(input, emit, signal, env = process.env
       method: 'POST', signal: combined,
       body: JSON.stringify({
         agent: env.OPENCODE_DEFAULT_AGENT || 'triage-agent',
-        model: { providerID: env.OPENCODE_PROVIDER_ID || 'litellm', modelID: env.OPENCODE_MODEL || 'gpt-6-sol' },
+        model: { providerID: provider.id, modelID: provider.deployment },
         system: conversationInstructions(env, input.incident),
         parts: [{ type: 'text', text: input.content }],
       }),

@@ -1,8 +1,10 @@
 # Signal · Agentic Azure Observability
 
-A streaming, evidence-first workspace for investigating Azure incidents. Chat
-with an observability agent, watch diagnostic activity, and follow findings from
-application telemetry through container health and database signals.
+A streaming, evidence-first workspace for investigating Azure incidents, powered
+by **OpenCode and Microsoft Foundry models**. The runtime calls the **GPT-6 Sol**
+deployment directly through Azure OpenAI's v1 Responses API. Chat with the agent,
+watch controlled diagnostic activity, and follow evidence from application
+telemetry through container health and database signals.
 
 ## Quick start
 
@@ -37,6 +39,8 @@ Stopping the stack preserves named volumes.
 ## Features
 
 - Streaming Markdown chat with visible diagnostic tool activity.
+- Direct Foundry inference with API-key or Microsoft Entra ID authentication.
+- Visible deployment, authentication method, and per-response model attribution.
 - Ordinary conversation for greetings and general questions in OpenCode mode.
 - Searchable live Azure resource inventory and environment selection.
 - Correlated application, container, database, and deployment diagnostics.
@@ -49,11 +53,41 @@ Stopping the stack preserves named volumes.
 ```text
 Browser → UI / nginx :8080 → API :8088 → Runtime :4096
                               │             ├─ demo: seeded evidence + streamed answer
-                              │             └─ OpenCode :4097 → LiteLLM → model
+                              │             └─ OpenCode :4097 ⇄ Microsoft Foundry / GPT-6 Sol
                               └─ api-data                 └─ runtime-data
 
                       ← SSE messages, tool activity, and state updates ←
 ```
+
+### Where the model fits
+
+```mermaid
+flowchart TB
+    UI["Triage dashboard · streaming chat"] <--> API["API · conversation state"]
+    subgraph Runtime["Containerized OpenCode agent runtime"]
+        Agent["Triage agent · instructions, skills, context"]
+        Tools["Controlled tools · read-only diagnostics"]
+        Agent -->|permission-checked execution| Tools
+        Tools -->|observed evidence| Agent
+    end
+    API <--> Agent
+    Agent -->|instructions, conversation, evidence| Foundry["Microsoft Foundry models · GPT-6 Sol"]
+    Foundry -->|streamed responses and tool requests| Agent
+    Tools <--> Azure["Azure observability · App Insights, logs, metrics, resources"]
+    Agent --> RCA["Structured RCA · evidence, root cause, actions, confidence"]
+    RCA --> API
+```
+
+**Foundry performs inference and proposes tool calls. OpenCode owns tool execution
+and enforces permissions.** Tool results return to the model for correlation and
+the final answer. Model deployment controls belong to Foundry; Azure read access
+and tool permissions are configured separately. The supplied runtime runs in
+Docker Compose; an AKS deployment is not included in this project.
+
+The dashboard's **Microsoft Foundry** panel shows the configured deployment and
+authentication method. It marks the connection verified only after an agent
+response succeeds, rather than assuming that an endpoint or model catalog entry
+proves inference is working. Assistant messages retain their model attribution.
 
 ```text
 services/
@@ -61,6 +95,7 @@ services/
   runtime/
     agents/            # Triage instructions
     config/            # Provider configuration and tool permissions
+    plugins/           # Direct Foundry authentication and model request settings
     skills/            # Demo and live Azure investigation guidance
     tools/             # Seeded evidence and scoped Azure diagnostic helpers
     lib/               # Shared JSON/SSE transport utilities
@@ -78,46 +113,96 @@ independently of the browser, so closing a tab does not cancel a run. **Stop**
 cancels the runtime request and the corresponding OpenCode session. An API
 restart marks in-flight responses interrupted; completed conversations persist.
 
-## Use a model through LiteLLM
+## Use GPT-6 Sol directly from Microsoft Foundry
 
-Copy `.env.example` to `.env` and configure your gateway:
+Deploy an Azure OpenAI model in Microsoft Foundry, then copy `.env.example` to
+`.env`. Use the **resource endpoint** and your **deployment name**, which can
+differ from the underlying model name.
+
+### API-key authentication
 
 ```dotenv
 TRIAGE_MODE=opencode
-LITELLM_BASE_URL=http://host.docker.internal:4000/v1
-OPENAI_API_KEY=your-gateway-key
-OPENCODE_MODEL=your-deployed-model-alias
-OPENCODE_SMALL_MODEL=your-deployed-model-alias
-OPENCODE_MODEL_DISPLAY_NAME=Your model
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=gpt-6-sol
+AZURE_OPENAI_AUTH_MODE=api-key
+AZURE_OPENAI_API_KEY=your-foundry-resource-key
 ```
 
 ```bash
 docker compose up --build -d --wait
 ```
 
-The gateway must support the **OpenAI Responses API**, streaming, and tool
-calling. LiteLLM is an external endpoint, not a fourth required container.
-`host.docker.internal` reaches a host gateway from Docker Desktop; the Compose
-file also provides a Linux host-gateway mapping. The gateway must listen on a
-container-reachable interface.
+The runtime normalizes the URL to
+`https://your-resource.openai.azure.com/openai/v1` and sends streaming requests
+directly to **`POST /openai/v1/responses`**. A Foundry resource endpoint such as
+`https://your-resource.services.ai.azure.com` is also accepted. A project URL
+ending in `/api/projects/...` is not a model inference endpoint.
 
-`OPENAI_API_KEY` takes precedence over the optional `LITELLM_API_KEY` fallback.
-Choose aliases and limits that match your deployed model:
+No model gateway is required. The runtime uses `@ai-sdk/openai` with the Foundry
+v1 endpoint, Azure authentication headers, streaming responses, and function calls.
+
+### Microsoft Entra ID authentication
+
+To use the Azure identity authenticated inside the runtime instead of a key:
+
+```dotenv
+TRIAGE_MODE=opencode
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=gpt-6-sol
+AZURE_OPENAI_AUTH_MODE=azure-cli
+AZURE_OPENAI_API_KEY=
+```
+
+```bash
+docker compose up -d --build --wait
+docker compose exec runtime az login --use-device-code
+```
+
+The identity needs an inference role such as **Cognitive Services OpenAI User**
+on the model resource. The OpenCode authentication plugin acquires an Entra token
+for `https://ai.azure.com` and refreshes it before expiry, including during
+multi-step investigations. Tokens stay in process memory and are not written
+into generated model configuration or sent to the browser.
+
+On an Azure host with managed identity available, set
+`AZURE_LOGIN_WITH_MANAGED_IDENTITY=true` and optionally `AZURE_CLIENT_ID`.
+The runtime authenticates its CLI with that identity at startup; keep
+`AZURE_OPENAI_AUTH_MODE=azure-cli`. Azure observability permissions are separate
+from model inference permissions.
+
+### Model configuration
+
+Choose deployment names and limits that match your resource:
 
 | Variable | Default |
 | --- | --- |
-| `OPENCODE_PROVIDER_ID` / `OPENCODE_PROVIDER_NAME` | `litellm` / `LiteLLM` |
-| `OPENCODE_MODEL` / `OPENCODE_SMALL_MODEL` | `gpt-6-sol` |
+| `AZURE_OPENAI_ENDPOINT` | required in OpenCode mode |
+| `AZURE_OPENAI_DEPLOYMENT` | `gpt-6-sol` |
+| `AZURE_OPENAI_SMALL_DEPLOYMENT` | inherits the primary deployment |
+| `AZURE_OPENAI_AUTH_MODE` | `api-key` or `azure-cli` |
+| `OPENCODE_PROVIDER_ID` / `OPENCODE_PROVIDER_NAME` | `foundry` / `Microsoft Foundry` |
 | `OPENCODE_MODEL_CONTEXT_LIMIT` | `1050000` |
 | `OPENCODE_MODEL_INPUT_LIMIT` | `922000` |
 | `OPENCODE_MODEL_OUTPUT_LIMIT` | `16000` |
 | `OPENCODE_COMPACTION_RESERVED` | `50000` |
 | `TRIAGE_RUN_TIMEOUT_MS` | `600000` |
 
-The runtime packages OpenCode `1.18.30` with the `@ai-sdk/openai` provider.
-Its native server listens on runtime loopback (`4097`). Provider credentials
-are never sent to the browser. Recreate the runtime after environment changes;
-rebuild it after changing packaged agent instructions, skills, or configuration.
+The runtime packages OpenCode `1.18.30`; its native server listens on runtime
+loopback (`4097`). GPT-6 requests use model sampling defaults instead of unsupported
+temperature/top-p overrides. Recreate the runtime after environment changes;
+rebuild it after changing packaged instructions, skills, plugins, or configuration.
+
+| Demo configuration | Model inference | Evidence |
+| --- | --- | --- |
+| `TRIAGE_MODE=demo` | None; deterministic simulation | Seeded |
+| `TRIAGE_MODE=opencode`, live Azure disabled | Direct Foundry model calls | Seeded tool output |
+| `TRIAGE_MODE=opencode`, live Azure enabled | Direct Foundry model calls | Real scoped Azure diagnostics |
+
+For a presentation, OpenCode mode with seeded evidence demonstrates real Foundry
+inference and controlled tool execution without requiring access to application
+resources. See the [Microsoft Foundry Responses API documentation](https://learn.microsoft.com/azure/foundry/openai/how-to/responses)
+for deployment, supported-model, and authentication details.
 
 ## Connect a real Azure resource group
 
@@ -207,8 +292,8 @@ Tests cover streaming transport, reconnection, persistence, cancellation,
 conversational behavior, model configuration, environment scope, resource
 relationships, log redaction, and continued checks after empty telemetry.
 
-To exercise the packaged OpenCode binary against a deterministic mock Responses
-API without model credentials:
+To exercise the packaged OpenCode binary against a deterministic mock Foundry
+v1 Responses API without model credentials:
 
 ```bash
 docker compose build runtime
@@ -216,7 +301,8 @@ npm run test:opencode
 ```
 
 This check creates and removes its own temporary runtime container. It verifies
-skill loading, a seeded diagnostic tool invocation, and streamed text.
+the direct `/openai/v1/responses` path, Azure API-key headers, model request
+parameters, skill loading, a seeded tool invocation, and streamed text.
 
 ## Scope
 

@@ -61,6 +61,8 @@ export async function createApi({ dataDir = process.env.TRIAGE_DATA_DIR || './da
         if (event === 'run.context') {
           const changed = session.execution?.mode !== data.mode;
           session.execution = data;
+          assistant.inference = data.provider;
+          publish(session.id, 'message.updated', { message: assistant });
           if (changed) {
             session.evidence = [];
             session.timeline = [];

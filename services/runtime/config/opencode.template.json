@@ -87,7 +87,7 @@
       "npm": "@ai-sdk/openai",
       "name": "__PROVIDER_NAME__",
       "options": {
-        "baseURL": "__LITELLM_BASE_URL__",
+        "baseURL": "__MODEL_BASE_URL__",
         "apiKey": "__API_KEY__"
       },
       "models": {

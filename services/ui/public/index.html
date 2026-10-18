@@ -36,6 +36,13 @@
           <div class="eyebrow"><span></span> YOUR ON-CALL COPILOT</div>
           <h1>Less noise.<br>More <span>understanding.</span></h1>
           <p class="intro">Follow the signals from symptom to root cause.<br>Your agent investigates. You see the evidence.</p>
+          <section class="inference-panel" id="inference-panel" aria-label="Model inference" hidden>
+            <div class="inference-heading"><span>◇ MICROSOFT FOUNDRY</span><span class="inference-route">DIRECT INFERENCE</span></div>
+            <div class="inference-model"><strong id="model-deployment">gpt-6-sol</strong><span id="model-status">Configured</span></div>
+            <div class="inference-flow"><span>OpenCode runtime</span><span>⇄</span><span>Foundry Responses API</span></div>
+            <p>Foundry generates responses and tool requests. OpenCode executes controlled diagnostics.</p>
+            <small id="model-auth"></small>
+          </section>
           <div class="live-preview" id="live-preview" hidden>
             <div class="preview-heading"><span><span class="tiny-dot" id="azure-dot"></span> LIVE AZURE RESOURCE GROUP</span><span id="inventory-time" class="mono">Connecting…</span></div>
             <h2 id="live-group">Azure resource inventory</h2>

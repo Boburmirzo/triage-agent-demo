@@ -48,10 +48,11 @@ function renderMessages() {
     if (!node) {
       node = document.createElement('article');
       node.className = `message ${message.role === 'user' ? 'user' : 'assistant'}`;
-      node.innerHTML = `<div class="message-heading"><span class="message-avatar">${message.role === 'user' ? 'Y' : '⌁'}</span><span>${message.role === 'user' ? 'You' : 'Triage agent'}</span><time>${esc(formatTime(message.created_at))}</time></div><div class="message-body ${message.role === 'assistant' ? 'markdown' : ''}"></div>`;
+      node.innerHTML = `<div class="message-heading"><span class="message-avatar">${message.role === 'user' ? 'Y' : '⌁'}</span><span>${message.role === 'user' ? 'You' : 'Triage agent'}</span><span class="model-origin"></span><time>${esc(formatTime(message.created_at))}</time></div><div class="message-body ${message.role === 'assistant' ? 'markdown' : ''}"></div>`;
       $('messages').append(node);
       messageNodes.set(message.id, node);
     }
+    node.querySelector('.model-origin').textContent = message.inference ? `${message.inference.name} · ${message.inference.model}` : '';
     const signature = `${message.complete}:${message.content}`;
     if (node._signature !== signature) {
       const body = node.querySelector('.message-body');
@@ -162,7 +163,10 @@ function connectStream(id) {
   listen('session.updated', ({ session }) => {
     state.session = session;
     putSession(session);
-    if (!['responding', 'investigating'].includes(session.status)) announce(`${session.run_kind === 'conversation' ? 'Response' : 'Investigation'} ${session.status}`);
+    if (!['responding', 'investigating'].includes(session.status)) {
+      announce(`${session.run_kind === 'conversation' ? 'Response' : 'Investigation'} ${session.status}`);
+      loadHealth();
+    }
   });
 }
 
@@ -295,9 +299,10 @@ async function loadHealth() {
     state.health = await api('/api/health');
     const runtime = state.health.runtime;
     const demo = runtime.mode === 'demo';
-    $('mode').textContent = demo ? 'DEMO MODE' : liveAzure() ? 'LIVE AZURE' : 'OPENCODE';
+    $('mode').textContent = demo ? 'DEMO MODE' : liveAzure() ? 'LIVE AZURE' : 'FOUNDRY';
     $('mode').title = runtime.model;
-    $('mode-note').textContent = demo ? 'Simulated evidence · No cloud credentials needed.' : liveAzure() ? `${runtime.resourceGroup} · ${runtime.model} · Read-only diagnostics` : runtime.liveAzure ? 'Live Azure enabled · Read-only, on request.' : 'OpenCode + LiteLLM · Seeded Azure evidence.';
+    $('mode-note').textContent = demo ? 'Simulated evidence · No cloud credentials needed.' : `${runtime.provider?.name || 'Microsoft Foundry'} · ${runtime.model} · ${runtime.liveAzure ? 'Read-only Azure diagnostics' : 'Seeded Azure evidence'}`;
+    renderModel(runtime.provider);
     $('demo-preview').hidden = liveAzure();
     $('live-preview').hidden = !liveAzure();
     $('resources-tab').hidden = !liveAzure();
@@ -316,19 +321,29 @@ async function loadHealth() {
 }
 
 async function loadLiveContext() {
-  if (!liveAzure()) return;
+  if (state.health?.runtime?.mode !== 'opencode') return;
   try {
     const first = !state.context;
     state.context = await api('/api/context');
     const { azure, provider } = state.context;
+    renderModel(provider);
+    if (!liveAzure()) return;
     renderScope();
     $('inventory-time').textContent = azure?.checkedAt ? `Checked ${formatTime(azure.checkedAt)}` : 'Not connected';
-    $('azure-status').textContent = azure?.error || provider?.error || `${azure.subscription} · Azure + GPT-6 Sol connected`;
+    $('azure-status').textContent = azure?.error || provider?.error || `${azure.subscription} · Azure discovery connected`;
     $('azure-dot').classList.toggle('offline', !azure?.connected);
     $('mode').classList.toggle('live', !!azure?.connected && !!provider?.connected);
     if (first && !state.session) state.tab = 'resources';
     renderContext();
   } catch (error) { $('azure-status').textContent = error.message; }
+}
+
+function renderModel(provider) {
+  $('inference-panel').hidden = !provider;
+  if (!provider) return;
+  $('model-deployment').textContent = provider.model;
+  $('model-status').textContent = provider.connected === true ? 'Response verified' : provider.connected === false ? 'Last request failed' : provider.configured ? 'Awaiting first response' : 'Not configured';
+  $('model-auth').textContent = `${provider.authentication} · Streaming Responses API${provider.lastInferenceAt ? ` · Last request ${formatTime(provider.lastInferenceAt)}` : ''}`;
 }
 
 function renderScope() {

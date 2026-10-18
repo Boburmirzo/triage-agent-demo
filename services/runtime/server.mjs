@@ -5,11 +5,14 @@ import { investigateDemo } from './demo.mjs';
 import { investigateOpenCode, openCodeClient } from './opencode.mjs';
 import { json, readJson, startSse, writeSse } from './lib/http.mjs';
 import { contextReader } from './context.mjs';
+import { modelProvider, publicModelProvider } from './model-provider.mjs';
 
 export function createRuntime(env = process.env) {
   const mode = env.TRIAGE_MODE || 'demo';
   if (!['demo', 'opencode'].includes(mode)) throw new Error('TRIAGE_MODE must be demo or opencode');
-  const context = contextReader(env);
+  let lastInference = null;
+  const provider = modelProvider(env);
+  const context = contextReader(env, () => lastInference);
   return http.createServer(async (req, res) => {
     try {
       if (req.url === '/health' || req.url === '/global/health') {
@@ -17,7 +20,7 @@ export function createRuntime(env = process.env) {
         if (mode === 'opencode') {
           healthy = await openCodeClient(env)('/global/health').then((r) => r.json()).then((v) => v.healthy === true).catch(() => false);
         }
-        return json(res, healthy ? 200 : 503, { healthy, service: 'runtime', mode, liveAzure: env.TRIAGE_LIVE_AZURE_ENABLED === 'true', resourceGroup: env.AZURE_RESOURCE_GROUP || null, model: mode === 'demo' ? 'Deterministic demo' : env.OPENCODE_MODEL || 'gpt-6-sol' });
+        return json(res, healthy ? 200 : 503, { healthy, service: 'runtime', mode, liveAzure: env.TRIAGE_LIVE_AZURE_ENABLED === 'true', resourceGroup: env.AZURE_RESOURCE_GROUP || null, model: mode === 'demo' ? 'Deterministic demo' : provider.deployment, provider: mode === 'opencode' ? publicModelProvider(env, lastInference) : null });
       }
       if (req.url === '/context' && req.method === 'GET') return json(res, 200, await context());
       if (req.url !== '/runs' || req.method !== 'POST') return json(res, 404, { error: 'Not found' });
@@ -27,17 +30,20 @@ export function createRuntime(env = process.env) {
       res.on('close', () => controller.abort());
       const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(Number(env.TRIAGE_RUN_TIMEOUT_MS || 600000))]);
       startSse(res);
-      const emit = (event, data) => writeSse(res, event, data);
+      const emit = (event, data) => {
+        if (mode === 'opencode' && ['run.completed', 'run.failed'].includes(event)) lastInference = { success: event === 'run.completed', at: new Date().toISOString() };
+        writeSse(res, event, data);
+      };
       try {
-        if (mode === 'opencode' && env.TRIAGE_LIVE_AZURE_ENABLED === 'true' && env.AZURE_RESOURCE_GROUP) {
+        if (mode === 'opencode') {
           // Chat must work without querying Azure. The diagnostic helper checks
           // Azure access only when the agent actually needs evidence for a request.
-          emit('run.context', { mode: 'live-azure', resourceGroup: env.AZURE_RESOURCE_GROUP, subscriptionId: env.AZURE_SUBSCRIPTION_ID });
+          emit('run.context', { mode: env.TRIAGE_LIVE_AZURE_ENABLED === 'true' ? 'live-azure' : 'opencode', resourceGroup: env.AZURE_RESOURCE_GROUP || null, subscriptionId: env.AZURE_SUBSCRIPTION_ID || null, provider: publicModelProvider(env) });
         }
         if (mode === 'demo') await investigateDemo(input, emit, signal);
         else await investigateOpenCode(input, emit, signal, env);
       } catch {
-        emit('run.failed', { error: signal.aborted ? 'Investigation stopped or timed out.' : 'Agent execution failed. Check the runtime and LiteLLM configuration, then retry.' });
+        emit('run.failed', { error: signal.aborted ? 'Investigation stopped or timed out.' : 'Agent execution failed. Check the Foundry deployment, authentication, and runtime configuration, then retry.' });
       } finally { res.end(); }
     } catch (error) {
       if (!res.headersSent) json(res, error.status || 500, { error: error.status ? error.message : 'Runtime request failed' });
