@@ -1,9 +1,81 @@
+name: triage-agent-demo
+
 services:
-  opencode-triage-agent-demo:
-    build: .
-    ports:
-      - "4096:4096"
-    env_file:
-      - .env
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    init: true
     environment:
+      PORT: 8088
+      TRIAGE_RUNTIME_URL: http://runtime:4096
+      TRIAGE_DATA_DIR: /data
+      TRIAGE_RUN_TIMEOUT_MS: ${TRIAGE_RUN_TIMEOUT_MS:-600000}
+    ports:
+      - "127.0.0.1:${API_PORT:-7071}:8088"
+    volumes:
+      - api-data:/data
+    depends_on:
+      runtime:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8088/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  runtime:
+    build: ./services/runtime
+    init: true
+    environment:
+      TRIAGE_MODE: ${TRIAGE_MODE:-demo}
+      TRIAGE_LIVE_AZURE_ENABLED: ${TRIAGE_LIVE_AZURE_ENABLED:-false}
+      TRIAGE_RUN_TIMEOUT_MS: ${TRIAGE_RUN_TIMEOUT_MS:-600000}
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-opencode}
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-local-dev}
       OPENCODE_DEFAULT_AGENT: triage-agent
+      OPENCODE_PROVIDER_ID: ${OPENCODE_PROVIDER_ID:-litellm}
+      OPENCODE_PROVIDER_NAME: ${OPENCODE_PROVIDER_NAME:-LiteLLM}
+      OPENCODE_MODEL: ${OPENCODE_MODEL:-gpt-6-sol}
+      OPENCODE_SMALL_MODEL: ${OPENCODE_SMALL_MODEL:-gpt-6-sol}
+      OPENCODE_MODEL_DISPLAY_NAME: ${OPENCODE_MODEL_DISPLAY_NAME:-GPT-6 Sol}
+      OPENCODE_MODEL_CONTEXT_LIMIT: ${OPENCODE_MODEL_CONTEXT_LIMIT:-1050000}
+      OPENCODE_MODEL_INPUT_LIMIT: ${OPENCODE_MODEL_INPUT_LIMIT:-922000}
+      OPENCODE_MODEL_OUTPUT_LIMIT: ${OPENCODE_MODEL_OUTPUT_LIMIT:-16000}
+      OPENCODE_COMPACTION_RESERVED: ${OPENCODE_COMPACTION_RESERVED:-50000}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://host.docker.internal:4000/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LITELLM_API_KEY: ${LITELLM_API_KEY:-}
+      AZURE_LOGIN_WITH_MANAGED_IDENTITY: ${AZURE_LOGIN_WITH_MANAGED_IDENTITY:-false}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID:-}
+      AZURE_RESOURCE_GROUP: ${AZURE_RESOURCE_GROUP:-}
+      AZURE_STAGING_DATABASE_SERVERS: ${AZURE_STAGING_DATABASE_SERVERS:-}
+      AZURE_PRODUCTION_DATABASE_SERVERS: ${AZURE_PRODUCTION_DATABASE_SERVERS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - runtime-data:/home/opencode/.local/share/opencode
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4096/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  ui:
+    build: ./services/ui
+    ports:
+      - "127.0.0.1:${UI_PORT:-7070}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  api-data:
+  runtime-data:

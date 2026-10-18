@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0c1016">
+  <meta name="description" content="An evidence-first workspace for agentic Azure observability.">
+  <title>Signal — Observability workspace</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Investigations">
+      <a class="brand" href="/" aria-label="Signal home"><span class="brand-mark">⌁</span><span>signal<span class="brand-period">.</span></span><span class="brand-tag">LAB</span></a>
+      <div class="workspace"><span class="workspace-icon">S</span><div><strong>Observability workspace</strong><small>Azure · Triage agent</small></div><span class="workspace-dot"></span></div>
+      <button class="new-button" id="new-session"><span>＋</span> New investigation <kbd>N</kbd></button>
+      <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find an investigation" aria-label="Search investigations"></label>
+      <div class="section-label">INVESTIGATIONS <span id="session-count">0</span></div>
+      <nav id="sessions" class="sessions" aria-label="Investigation history"></nav>
+      <div class="sidebar-bottom">
+        <div class="stack-label"><span class="tiny-dot"></span> THREE SERVICES. ONE WORKSPACE.</div>
+        <div class="stack"><span>UI</span><i>→</i><span>API</span><i>→</i><span>Runtime</span></div>
+        <div class="profile"><span class="avatar">S</span><div><strong>Signal demo</strong><small>Built for the curious</small></div><span class="version">v0.2</span></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="menu-toggle" aria-label="Toggle investigations" aria-expanded="false">☰</button>
+        <div class="breadcrumb"><span class="breadcrumb-icon">⌘</span><span>Investigations</span><span class="slash">/</span><strong id="page-title">New investigation</strong></div>
+        <div class="header-actions"><span class="mode-badge" id="mode">Connecting</span><button class="icon-button" id="export" aria-label="Export investigation as Markdown" title="Export Markdown" disabled>↓</button><button class="icon-button" id="panel-toggle" aria-label="Toggle evidence panel" aria-expanded="false">◫</button></div>
+      </header>
+      <div class="status-strip"><span><span class="tiny-dot" id="connection-dot"></span><span id="connection">Connecting to workspace…</span></span><span id="run-status">READY WHEN YOU ARE</span></div>
+      <section class="chat" id="chat" aria-label="Investigation conversation" tabindex="0">
+        <div id="welcome" class="welcome">
+          <div class="eyebrow"><span></span> YOUR ON-CALL COPILOT</div>
+          <h1>Less noise.<br>More <span>understanding.</span></h1>
+          <p class="intro">Follow the signals from symptom to root cause.<br>Your agent investigates. You see the evidence.</p>
+          <div class="live-preview" id="live-preview" hidden>
+            <div class="preview-heading"><span><span class="tiny-dot" id="azure-dot"></span> LIVE AZURE RESOURCE GROUP</span><span id="inventory-time" class="mono">Connecting…</span></div>
+            <h2 id="live-group">Azure resource inventory</h2>
+            <div class="live-metrics"><div><strong id="resource-total">—</strong><small>resources discovered</small></div><div><strong id="type-total">—</strong><small>resource types</small></div><div><strong id="region-total">—</strong><small>locations</small></div></div>
+            <div class="preview-footer"><span id="azure-status">Verifying Azure access…</span><span>INVENTORY ≠ HEALTH</span></div>
+          </div>
+          <div class="scenario-preview" id="demo-preview">
+            <div class="preview-heading"><span><span class="tiny-dot amber"></span> THE DEMO INCIDENT</span><span class="mono">09:55 — 10:10 UTC</span></div>
+            <div class="metric-grid">
+              <div><small>Failed requests</small><strong>12 <span>errors</span></strong><svg viewBox="0 0 150 26" aria-hidden="true"><path d="M0 23 L28 23 L32 18 L36 23 L60 23 L65 6 L70 23 L92 23 L98 2 L104 23 L122 23 L129 9 L135 23 L150 23"/></svg></div>
+              <div><small>Database p95</small><strong>8.4 <span>sec</span></strong><svg viewBox="0 0 150 26" aria-hidden="true"><path d="M0 24 L25 23 L42 24 L52 20 L65 21 L78 10 L90 12 L102 4 L117 7 L132 2 L150 4"/></svg></div>
+              <div><small>Queue backlog</small><strong>187 <span>jobs</span></strong><svg viewBox="0 0 150 26" aria-hidden="true"><path d="M0 24 L20 24 L20 21 L43 21 L43 18 L65 18 L65 13 L89 13 L89 9 L113 9 L113 4 L135 4 L135 1 L150 1"/></svg></div>
+            </div>
+            <div class="preview-footer"><span>ExampleCo / staging / report-generation</span><span>SEEDED TELEMETRY</span></div>
+          </div>
+          <div class="suggestion-heading">START WITH A QUESTION <span>↙</span></div>
+          <div class="suggestions">
+            <button data-prompt="ExampleCo staging report generation failed with timeout around 10:00 UTC. Investigate the incident and explain the likely root cause."><span class="suggestion-icon mint">⌁</span><strong>Investigate a timeout</strong><small>Connect errors, latency, and worker health.</small><span class="suggestion-arrow">↗</span></button>
+            <button data-prompt="Investigate the ExampleCo staging report-generation queue backlog around 10:00 UTC. What evidence explains the delayed jobs?"><span class="suggestion-icon blue">▤</span><strong>Follow the queue backlog</strong><small>Find the bottleneck behind delayed jobs.</small><span class="suggestion-arrow">↗</span></button>
+            <button data-prompt="Investigate the ExampleCo staging report timeout around 10:00 UTC. Check whether a deployment regression explains the failures."><span class="suggestion-icon purple">◇</span><strong>Check a deployment</strong><small>Separate a release regression from noise.</small><span class="suggestion-arrow">↗</span></button>
+          </div>
+        </div>
+        <div id="messages" class="messages"></div>
+        <div id="activity" class="activity" role="status" hidden></div>
+      </section>
+      <div class="composer-wrap">
+        <div id="error" class="error-banner" role="alert" hidden></div>
+        <form id="composer" class="composer">
+          <label class="sr-only" for="prompt">Describe an incident or ask a follow-up</label>
+          <textarea id="prompt" rows="2" maxlength="16000" placeholder="Ask a question or describe an incident…"></textarea>
+          <div class="composer-toolbar"><div class="composer-context"><span class="agent-chip"><span class="tiny-dot"></span> Triage agent</span><span class="divider"></span><label><span class="sr-only">Environment for new investigations</span><select id="environment"><option value="staging">◈ Staging</option><option value="production">◈ Production</option><option value="all">◈ All resources</option></select></label></div><button class="send-button" id="send" type="submit" aria-label="Send message">Send <span>↑</span></button><button class="stop-button" id="stop" type="button" hidden>■ Stop</button></div>
+        </form>
+        <div class="composer-footnote"><span id="mode-note">Seeded evidence. Read-only by design.</span><span><kbd>↵</kbd> send <span class="footnote-separator">·</span> <kbd>⇧ ↵</kbd> new line</span></div>
+      </div>
+    </main>
+    <aside class="inspector" id="inspector" aria-label="Investigation evidence">
+      <div class="inspector-header"><span class="inspector-icon">◎</span><strong>Investigation context</strong><span class="inspector-label">LIVE VIEW</span></div>
+      <div class="inspector-tabs" role="tablist" aria-label="Context views"><button id="trace-tab" class="active" role="tab" aria-selected="true" aria-controls="context-content" data-tab="trace">Activity <span id="tool-count">0</span></button><button id="evidence-tab" role="tab" aria-selected="false" aria-controls="context-content" data-tab="evidence">Evidence <span id="evidence-count">0</span></button><button id="resources-tab" role="tab" aria-selected="false" aria-controls="context-content" data-tab="resources" hidden>Resources <span id="resource-count">0</span></button></div>
+      <label class="resource-search" id="resource-search" hidden><span class="sr-only">Filter Azure resources by name or type</span><input id="resource-filter" type="search" placeholder="Find a resource or type…"></label>
+      <div id="context-content" class="context-content" role="tabpanel" aria-labelledby="trace-tab"></div>
+      <div class="inspector-footer"><span class="shield">◇</span><div><strong>Evidence, before answers.</strong><small>Tool activity is visible as it happens.<br>Remediation stays in your hands.</small></div></div>
+    </aside>
+  </div>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

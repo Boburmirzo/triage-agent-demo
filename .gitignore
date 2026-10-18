@@ -1,0 +1,20 @@
+.env
+.env.*
+!.env.example
+# Machine-specific deployment and local launch helpers.
+/compose.live.yml
+/server.mjs
+/services/ui/server.mjs
+/services/runtime/bootstrap-azure.mjs
+*.local.*
+docker-compose.override.*
+compose.override.*
+local/
+.azure/
+__pycache__/
+*.py[cod]
+*.log
+data/
+node_modules/
+.DS_Store
+test-results/

@@ -1,9 +1,11 @@
 # Triage Agent Demo Runtime
 
-This folder contains two demo surfaces:
+This folder contains three independently runnable services:
 
-- A lightweight offline UI/API demo served by `npm start`.
-- A Dockerized OpenCode runtime with a demo `triage-agent` served by the `Dockerfile`.
+- `services/api`: persistent investigation state and browser event streams.
+- `services/runtime`: seeded diagnostics or a headless OpenCode triage agent.
+- `services/ui`: streaming chat and investigation evidence workspace.
+- `docker compose up --build` starts all three. `npm start` starts the local demo.
 
 Rules:
 

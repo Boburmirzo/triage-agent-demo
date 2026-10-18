@@ -6,14 +6,15 @@
   "share": "disabled",
   "autoupdate": false,
   "snapshot": false,
+  "compaction": { "auto": true, "reserved": "__COMPACTION_RESERVED__" },
   "enabled_providers": ["__PROVIDER_ID__"],
   "permission": {
     "edit": "deny",
     "webfetch": "deny",
     "external_directory": "deny",
     "skill": {
-      "azure-observability-demo": "allow",
-      "*": "deny"
+      "*": "deny",
+      "azure-observability-demo": "allow"
     }
   },
   "agent": {
@@ -75,43 +76,25 @@
           "az rest -m get*": "allow"
         },
         "skill": {
-          "azure-observability-demo": "allow",
-          "*": "deny"
+          "*": "deny",
+          "azure-observability-demo": "allow"
         }
       }
     }
   },
   "provider": {
     "__PROVIDER_ID__": {
-      "npm": "@ai-sdk/openai-compatible",
+      "npm": "@ai-sdk/openai",
       "name": "__PROVIDER_NAME__",
       "options": {
-        "baseURL": "__OPENAI_BASE_URL__",
+        "baseURL": "__LITELLM_BASE_URL__",
         "apiKey": "__API_KEY__"
       },
       "models": {
         "__MODEL_ID__": {
           "name": "__MODEL_DISPLAY_NAME__",
           "tool_call": true,
-          "capabilities": {
-            "temperature": false,
-            "reasoning": true,
-            "toolcall": true,
-            "input": {
-              "text": true,
-              "image": false,
-              "audio": false,
-              "video": false,
-              "pdf": false
-            },
-            "output": {
-              "text": true,
-              "image": false,
-              "audio": false,
-              "video": false,
-              "pdf": false
-            }
-          },
+          "modalities": { "input": ["text"], "output": ["text"] },
           "limit": {
             "context": "__MODEL_CONTEXT_LIMIT__",
             "output": "__MODEL_OUTPUT_LIMIT__"
